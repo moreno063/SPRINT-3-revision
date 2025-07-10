@@ -48,7 +48,6 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
         tblNotificaciones.getColumnModel().getColumn(3).setMinWidth(0);
         tblNotificaciones.getColumnModel().getColumn(3).setMaxWidth(0);
         tblNotificaciones.getColumnModel().getColumn(3).setWidth(0);
-
     }
 
     private void configurarListenerNotificaciones() {
@@ -77,7 +76,7 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
                         model.setRowCount(0);
                         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-                        if (querySnapshot.isEmpty()) {
+                        if (querySnapshot == null || querySnapshot.isEmpty()) {
                             model.addRow(new Object[]{"", "No hay notificaciones disponibles", "", ""});
                             return;
                         }
@@ -85,12 +84,12 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
                         for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                             try {
                                 boolean leido = doc.getBoolean("leido");
-                                boolean editable = doc.contains("editable") && doc.getBoolean("editable");
+                                boolean editable = doc.getBoolean("editable");
 
                                 model.addRow(new Object[]{
                                     doc.getString("de"),
                                     sdf.format(doc.getTimestamp("fecha").toDate()),
-                                    leido ? (editable ? "✓ Editable" : "✓ Leído") : "Nuevo!",
+                                    leido ? (editable ? "✓ Editable" : "✓ Leído") : "Nuevo",
                                     doc.getId()
                                 });
                             } catch (Exception e) {
@@ -105,6 +104,14 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
             List<Map<String, Object>> datos) {
         JFrame frame = new JFrame("Tabla compartida por: " + usuarioOrigen);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        System.out.println("[DEBUG] Datos recibidos para mostrar:");
+        
+        if (datos != null) {
+            for (Map<String, Object> fila : datos) {
+                System.out.println("Fila: " + fila);
+                System.out.println("Campos disponibles: " + fila.keySet());
+            }
+        }
 
         JTable tablaDatos = new JTable();
         DefaultTableModel model = new DefaultTableModel() {
@@ -113,17 +120,26 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
                 return true;
             }
         };
+        String[] columnOrder = {
+            "Cama",
+            "Cedula",
+            "Nombre",
+            "Edad",
+            "FechaIngreso",
+            "Diagnostico",
+            "Pendientes",
+            "Email"};
+        for (String col : columnOrder) {
+            model.addColumn(col);
+        }
 
         if (datos != null && !datos.isEmpty()) {
-            for (String key : datos.get(0).keySet()) {
-                model.addColumn(key);
-            }
-
             for (Map<String, Object> fila : datos) {
-                Object[] rowData = new Object[model.getColumnCount()];
-                int i = 0;
-                for (int j = 0; j < model.getColumnCount(); j++) {
-                    rowData[i++] = fila.get(model.getColumnName(j));
+                Object[] rowData = new Object[columnOrder.length];
+                for (int i = 0; i < columnOrder.length; i++) {
+                    String campo = columnOrder[i];
+                    Object valor = fila.get(campo);
+                    rowData[i] = (valor != null) ? valor : "";
                 }
                 model.addRow(rowData);
             }
@@ -136,8 +152,8 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
         panelPrincipal.setBackground(new Color(221, 255, 170));
 
         JPanel panelBotones = new JPanel();
-
         JButton btnGuardar = new JButton("Guardar Cambios");
+
         btnGuardar.addActionListener(e -> {
             List<Map<String, Object>> nuevosDatos = new ArrayList<>();
 
@@ -161,27 +177,6 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(frame,
                         "Error al guardar cambios",
                         "Error", JOptionPane.ERROR_MESSAGE);
-            }
-            String[] columnas = {"Cama", "ID", "Cedula", "Fecha ingreso", "Nombre",
-                "Edad", "Diagnóstico", "Pendientes", "Email"};
-
-            for (String columna : columnas) {
-                model.addColumn(columna);
-            }
-
-            for (Map<String, Object> fila : datos) {
-                Object[] rowData = new Object[]{
-                    fila.get("Cama"),
-                    fila.get("ID"), // Asegúrate que este campo existe
-                    fila.get("Cedula"),
-                    fila.get("FechaIngreso"),
-                    fila.get("Nombre"),
-                    fila.get("Edad"),
-                    fila.get("Diagnostico"),
-                    fila.get("Pendientes"),
-                    fila.get("Email")
-                };
-                model.addRow(rowData);
             }
         });
 

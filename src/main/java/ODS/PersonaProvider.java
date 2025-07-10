@@ -138,31 +138,32 @@ public class PersonaProvider {
                 return false;
             }
 
-            List<Map<String, Object>> datosCompletos = new ArrayList<>();
-            for (Map<String, Object> fila : datos) {
-                Map<String, Object> filaCompleta = new HashMap<>();
-                
-                filaCompleta.put("Cama", fila.get("Cama"));
-                filaCompleta.put("Cedula", fila.get("Cedula"));
-                filaCompleta.put("FechaIngreso", fila.get("FechaIngreso"));
-                filaCompleta.put("Nombre", fila.get("Nombre"));
-                filaCompleta.put("Edad", fila.get("Edad"));
-                filaCompleta.put("Diagnostico", fila.get("Diagnostico"));
-                filaCompleta.put("Pendientes", fila.get("Pendientes"));
-                filaCompleta.put("Email", fila.get("Email"));
-                datosCompletos.add(filaCompleta);
+            List<Map<String, Object>> datosFormateados = new ArrayList<>();
+            for (Map<String, Object> filaOriginal : datos) {
+                Map<String, Object> filaFormateada = new HashMap<>();
+                filaFormateada.put("Cama", filaOriginal.get("Cama"));
+                filaFormateada.put("Cedula", filaOriginal.get("Cedula"));
+                filaFormateada.put("Nombre", filaOriginal.get("Nombre"));
+                filaFormateada.put("Edad", filaOriginal.get("Edad"));
+                filaFormateada.put("FechaIngreso", filaOriginal.get("FechaIngreso"));
+                filaFormateada.put("Diagnostico", filaOriginal.get("Diagnostico"));
+                filaFormateada.put("Pendientes", filaOriginal.get("Pendientes"));
+                filaFormateada.put("Email", filaOriginal.get("Email"));
+                datosFormateados.add(filaFormateada);
             }
+            
+            Map<String, Object> notificacion = new HashMap<>();
+            notificacion.put("de", usuarioOrigen);
+            notificacion.put("fecha", com.google.cloud.Timestamp.now());
+            notificacion.put("datos", datosFormateados);
+            notificacion.put("leido", false);
+            notificacion.put("editable", true);
 
-            Map<String, Object> compartido = new HashMap<>();
-            compartido.put("de", usuarioOrigen);
-            compartido.put("fecha", com.google.cloud.Timestamp.now());
-            compartido.put("datos", datosCompletos); 
-            compartido.put("leido", false);
-            compartido.put("editable", true);
-
-            db.collection("notificaciones").document(usuarioDestino)
-                    .collection("tablas").add(compartido).get();
-
+            db.collection("compartidos")
+                    .document(usuarioDestino)
+                    .collection("tablas")
+                    .add(notificacion)
+                    .get();
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -186,15 +187,17 @@ public class PersonaProvider {
     public static List<Map<String, Object>> obtenerTablasCompartidas(String usuario) {
         List<Map<String, Object>> notificaciones = new ArrayList<>();
         try {
-            QuerySnapshot querySnapshot = db.collection("notificaciones").document(usuario)
-                    .collection("tablasCompartidas").get().get();
+            QuerySnapshot querySnapshot = db.collection("compartidos").document(usuario)
+                    .collection("tablas").get().get();
             for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+
                 Map<String, Object> notificacion = new HashMap<>();
                 notificacion.put("id", doc.getId());
                 notificacion.put("de", doc.getString("de"));
                 notificacion.put("fecha", doc.getTimestamp("fecha").toDate());
                 notificacion.put("datos", doc.get("datos"));
                 notificacion.put("leido", doc.getBoolean("leido"));
+                notificacion.put("editable", doc.getBoolean("editable"));
                 notificaciones.add(notificacion);
             }
 

@@ -679,7 +679,7 @@ public class Ventana extends javax.swing.JFrame {
         cbCategorias.addItem("Todos los campos");
         cbCategorias.addItem("Cama");
         cbCategorias.addItem("ID");
-        cbCategorias.addItem("Cédula");
+        cbCategorias.addItem("Cedula");
         cbCategorias.addItem("Fecha ingreso");
         cbCategorias.addItem("Nombre");
         cbCategorias.addItem("Edad");
@@ -783,23 +783,19 @@ public class Ventana extends javax.swing.JFrame {
         if (usuarioDestino == null || usuarioDestino.trim().isEmpty()) {
             return;
         }
-
-        usuarioDestino = usuarioDestino.trim();
-
-        if (usuarioDestino.equals(Login.usuarioActual)) {
-            JOptionPane.showMessageDialog(this, "No puedes compartir la tabla contigo mismo",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
         DefaultTableModel model = (DefaultTableModel) tblPersona.getModel();
         List<Map<String, Object>> datosTabla = new ArrayList<>();
 
         for (int i = 0; i < model.getRowCount(); i++) {
             Map<String, Object> fila = new HashMap<>();
-            for (int j = 0; j < model.getColumnCount(); j++) {
-                fila.put(model.getColumnName(j), model.getValueAt(i, j));
-            }
+            fila.put("Cama", model.getValueAt(i, 0));      // Columna 0: Cama
+            fila.put("Cedula", model.getValueAt(i, 2));    // Columna 2: Cédula
+            fila.put("Nombre", model.getValueAt(i, 4));     // Columna 4: Nombre
+            fila.put("Edad", model.getValueAt(i, 5));       // Columna 5: Edad
+            fila.put("FechaIngreso", model.getValueAt(i, 3)); // Columna 3: Fecha ingreso
+            fila.put("Diagnostico", model.getValueAt(i, 6));  // Columna 6: Diagnóstico
+            fila.put("Pendientes", model.getValueAt(i, 7));   // Columna 7: Pendientes
+            fila.put("Email", model.getValueAt(i, 8));        // Columna 8: Email
             datosTabla.add(fila);
         }
 
