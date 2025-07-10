@@ -69,14 +69,21 @@ public class PersonaProvider {
 
     @SuppressWarnings("empty-statement")
     public static void cargarTablaPersona(JTable table, String usuario) {
+        DefaultTableModel model = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Hacer que todas las celdas sean editables
+                return true;
+            }
+        };
 
-        DefaultTableModel model = new DefaultTableModel();
         model.addColumn("Cama");
-        model.addColumn("Id");
+        model.addColumn("ID");
+        model.addColumn("Cédula");
         model.addColumn("Fecha ingreso");
         model.addColumn("Nombre");
         model.addColumn("Edad");
-        model.addColumn("Diagnostico");
+        model.addColumn("Diagnóstico");
         model.addColumn("Pendientes");
         model.addColumn("Email");
 
@@ -88,12 +95,14 @@ public class PersonaProvider {
                 model.addRow(new Object[]{
                     doc.getString("Cama"),
                     doc.getId(),
+                    doc.getString("Cedula"),
                     doc.getString("FechaIngreso"),
                     doc.getString("Nombre"),
                     doc.get("Edad").toString(),
                     doc.getString("Diagnostico"),
                     doc.getString("Pendientes"),
-                    doc.getString("Email"),});
+                    doc.getString("Email")
+                });
             }
 
         } catch (Exception e) {
@@ -119,38 +128,68 @@ public class PersonaProvider {
             return false;
         }
     }
-    
-    public static boolean compartirTabla(String usuarioOrigen, 
-            String usuarioDestino, List<Map<String , Object>> datos){
+
+    public static boolean compartirTabla(String usuarioOrigen,
+            String usuarioDestino, List<Map<String, Object>> datos) {
         try {
             DocumentReference userRef = db.collection("Usuarios").document(usuarioDestino);
-            if (!userRef.get().get().exists()){
+            DocumentSnapshot userSnapshot = userRef.get().get();
+            if (!userSnapshot.exists()) {
                 return false;
             }
+
+            List<Map<String, Object>> datosCompletos = new ArrayList<>();
+            for (Map<String, Object> fila : datos) {
+                Map<String, Object> filaCompleta = new HashMap<>();
                 
+                filaCompleta.put("Cama", fila.get("Cama"));
+                filaCompleta.put("Cedula", fila.get("Cedula"));
+                filaCompleta.put("FechaIngreso", fila.get("FechaIngreso"));
+                filaCompleta.put("Nombre", fila.get("Nombre"));
+                filaCompleta.put("Edad", fila.get("Edad"));
+                filaCompleta.put("Diagnostico", fila.get("Diagnostico"));
+                filaCompleta.put("Pendientes", fila.get("Pendientes"));
+                filaCompleta.put("Email", fila.get("Email"));
+                datosCompletos.add(filaCompleta);
+            }
+
             Map<String, Object> compartido = new HashMap<>();
             compartido.put("de", usuarioOrigen);
-            compartido.put("fecha", ServerValue.TIMESTAMP);
-            compartido.put("datos", datos);
+            compartido.put("fecha", com.google.cloud.Timestamp.now());
+            compartido.put("datos", datosCompletos); 
             compartido.put("leido", false);
-            
-            db.collection("compartidos").document(usuarioDestino)
-                    .collection("tablas").add(compartido);
-            
+            compartido.put("editable", true);
+
+            db.collection("notificaciones").document(usuarioDestino)
+                    .collection("tablas").add(compartido).get();
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-        
     }
-    public static List<Map<String,Object>> obtenerTablasCompartidas (String usuario){
-        List<Map<String,Object>> notificaciones = new ArrayList<>();
+
+    public static boolean guardarCambiosTablaCompartida(String usuario, String idNotificacion,
+            List<Map<String, Object>> nuevosDatos) {
         try {
-            QuerySnapshot querySnapshot = db.collection("compartidos"). document(usuario)
-                    .collection("tablas").get().get();
-            for (DocumentSnapshot doc : querySnapshot.getDocuments()){
-                Map<String,Object> notificacion = new HashMap<>();
+            DocumentReference notificacionRef = db.collection("compartidos")
+                    .document(usuario).collection("tablas").document(idNotificacion);
+            notificacionRef.update("datos", nuevosDatos);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error al guardar cambios: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static List<Map<String, Object>> obtenerTablasCompartidas(String usuario) {
+        List<Map<String, Object>> notificaciones = new ArrayList<>();
+        try {
+            QuerySnapshot querySnapshot = db.collection("notificaciones").document(usuario)
+                    .collection("tablasCompartidas").get().get();
+            for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                Map<String, Object> notificacion = new HashMap<>();
                 notificacion.put("id", doc.getId());
                 notificacion.put("de", doc.getString("de"));
                 notificacion.put("fecha", doc.getTimestamp("fecha").toDate());
@@ -158,14 +197,15 @@ public class PersonaProvider {
                 notificacion.put("leido", doc.getBoolean("leido"));
                 notificaciones.add(notificacion);
             }
-            
+
         } catch (Exception e) {
             System.err.println("Error al obtener notificaciones: " + e.getMessage());
         }
         return notificaciones;
-        
+
     }
-    public static boolean marcarComoLeido(String usuario, String idNotificacion){
+
+    public static boolean marcarComoLeido(String usuario, String idNotificacion) {
         try {
             db.collection("compartidos").document(usuario).collection("tablas")
                     .document(idNotificacion).update("leido", true);
@@ -176,4 +216,3 @@ public class PersonaProvider {
         }
     }
 }
-

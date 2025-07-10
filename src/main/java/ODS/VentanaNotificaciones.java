@@ -1,26 +1,45 @@
 package ODS;
 
-import static io.grpc.Context.key;
+import static ODS.Conexion.db;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.ListenerRegistration;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollBar;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 public class VentanaNotificaciones extends javax.swing.JFrame {
 
+    private ListenerRegistration notificacionesListener;
+    private Firestore db;
+
     public VentanaNotificaciones() {
         initComponents();
+        this.db = Conexion.db;
         this.setLocationRelativeTo(null);
         inicializarTabla();
-        cargarNotificaciones();
+        configurarListenerNotificaciones();
     }
-    private void inicializarTabla(){
-        DefaultTableModel model = new DefaultTableModel();
+
+    private void inicializarTabla() {
+        DefaultTableModel model = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         model.addColumn("De");
         model.addColumn("Fecha");
         model.addColumn("Estado");
@@ -29,30 +48,154 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
         tblNotificaciones.getColumnModel().getColumn(3).setMinWidth(0);
         tblNotificaciones.getColumnModel().getColumn(3).setMaxWidth(0);
         tblNotificaciones.getColumnModel().getColumn(3).setWidth(0);
+
     }
-    private void cargarNotificaciones() {
+
+    private void configurarListenerNotificaciones() {
         DefaultTableModel model = (DefaultTableModel) tblNotificaciones.getModel();
-        model.setRowCount(0); 
-        
-        List<Map<String, Object>> notificaciones = 
-                PersonaProvider.obtenerTablasCompartidas(Login.usuarioActual);
-        
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        
-        for (Map<String, Object> notif : notificaciones) {
-            model.addRow(new Object[]{
-                notif.get("de"),
-                sdf.format(notif.get("fecha")),
-                notif.get("leido").equals(true) ? "✓" : "Nuevo",
-                notif.get("id")
-            });
+        model.setRowCount(0);
+
+        if (notificacionesListener != null) {
+            notificacionesListener.remove();
         }
+
+        notificacionesListener = db.collection("compartidos")
+                .document(Login.usuarioActual)
+                .collection("tablas")
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null) {
+                        System.err.println("Error en listener: " + error.getMessage());
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(this,
+                                    "Error al cargar notificaciones: " + error.getMessage(),
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                        });
+                        return;
+                    }
+
+                    SwingUtilities.invokeLater(() -> {
+                        model.setRowCount(0);
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
+                        if (querySnapshot.isEmpty()) {
+                            model.addRow(new Object[]{"", "No hay notificaciones disponibles", "", ""});
+                            return;
+                        }
+
+                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                            try {
+                                boolean leido = doc.getBoolean("leido");
+                                boolean editable = doc.contains("editable") && doc.getBoolean("editable");
+
+                                model.addRow(new Object[]{
+                                    doc.getString("de"),
+                                    sdf.format(doc.getTimestamp("fecha").toDate()),
+                                    leido ? (editable ? "✓ Editable" : "✓ Leído") : "Nuevo!",
+                                    doc.getId()
+                                });
+                            } catch (Exception e) {
+                                System.err.println("Error procesando documento: " + e.getMessage());
+                            }
+                        }
+                    });
+                });
+    }
+
+    private void mostrarTablaCompartida(String usuarioOrigen, String idNotificacion,
+            List<Map<String, Object>> datos) {
+        JFrame frame = new JFrame("Tabla compartida por: " + usuarioOrigen);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JTable tablaDatos = new JTable();
+        DefaultTableModel model = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return true;
+            }
+        };
+
+        if (datos != null && !datos.isEmpty()) {
+            for (String key : datos.get(0).keySet()) {
+                model.addColumn(key);
+            }
+
+            for (Map<String, Object> fila : datos) {
+                Object[] rowData = new Object[model.getColumnCount()];
+                int i = 0;
+                for (int j = 0; j < model.getColumnCount(); j++) {
+                    rowData[i++] = fila.get(model.getColumnName(j));
+                }
+                model.addRow(rowData);
+            }
+        }
+
+        tablaDatos.setModel(model);
+
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.add(new JScrollPane(tablaDatos), BorderLayout.CENTER);
+        panelPrincipal.setBackground(new Color(221, 255, 170));
+
+        JPanel panelBotones = new JPanel();
+
+        JButton btnGuardar = new JButton("Guardar Cambios");
+        btnGuardar.addActionListener(e -> {
+            List<Map<String, Object>> nuevosDatos = new ArrayList<>();
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Map<String, Object> fila = new HashMap<>();
+                for (int j = 0; j < model.getColumnCount(); j++) {
+                    fila.put(model.getColumnName(j), model.getValueAt(i, j));
+                }
+                nuevosDatos.add(fila);
+            }
+
+            if (PersonaProvider.guardarCambiosTablaCompartida(
+                    Login.usuarioActual, idNotificacion, nuevosDatos)) {
+
+                JOptionPane.showMessageDialog(frame,
+                        "Cambios guardados exitosamente",
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+                PersonaProvider.marcarComoLeido(Login.usuarioActual, idNotificacion);
+            } else {
+                JOptionPane.showMessageDialog(frame,
+                        "Error al guardar cambios",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            String[] columnas = {"Cama", "ID", "Cedula", "Fecha ingreso", "Nombre",
+                "Edad", "Diagnóstico", "Pendientes", "Email"};
+
+            for (String columna : columnas) {
+                model.addColumn(columna);
+            }
+
+            for (Map<String, Object> fila : datos) {
+                Object[] rowData = new Object[]{
+                    fila.get("Cama"),
+                    fila.get("ID"), // Asegúrate que este campo existe
+                    fila.get("Cedula"),
+                    fila.get("FechaIngreso"),
+                    fila.get("Nombre"),
+                    fila.get("Edad"),
+                    fila.get("Diagnostico"),
+                    fila.get("Pendientes"),
+                    fila.get("Email")
+                };
+                model.addRow(rowData);
+            }
+        });
+
+        panelBotones.add(btnGuardar);
+        panelPrincipal.add(panelBotones, BorderLayout.SOUTH);
+
+        frame.add(panelPrincipal);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-
         jScrollPane2 = new javax.swing.JScrollPane();
         tblNotificaciones = new javax.swing.JTable();
         btnVer = new javax.swing.JButton();
@@ -63,22 +206,22 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
         setTitle("Notificaciones");
 
         tblNotificaciones.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
-            new String [] {"De", "Fecha", "Estado", "ID"}
+                new Object[][]{},
+                new String[]{"De", "Fecha", "Estado", "ID"}
         ) {
-            Class[] types = new Class [] {
+            Class[] types = new Class[]{
                 java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
-            boolean[] canEdit = new boolean [] {
+            boolean[] canEdit = new boolean[]{
                 false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
+                return types[columnIndex];
             }
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblNotificaciones.getTableHeader().setReorderingAllowed(false);
@@ -103,106 +246,104 @@ public class VentanaNotificaciones extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); 
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18));
         jLabel1.setText("Tablas Compartidas");
 
-       
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btnVer)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnCerrar))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(btnVer)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(btnCerrar))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel1)
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnCerrar)
-                    .addComponent(btnVer))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnCerrar)
+                                        .addComponent(btnVer))
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
-    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarActionPerformed
+    private void btnCerrarActionPerformed(java.awt.event.ActionEvent evt) {
         this.dispose();
-    }//GEN-LAST:event_btnCerrarActionPerformed
+    }
 
-    private void btnVerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerActionPerformed
+    @Override
+    public void dispose() {
+        if (notificacionesListener != null) {
+            notificacionesListener.remove();
+        }
+        super.dispose();
+    }
+
+    private void btnVerActionPerformed(java.awt.event.ActionEvent evt) {
         int fila = tblNotificaciones.getSelectedRow();
         if (fila < 0) {
             JOptionPane.showMessageDialog(this, "Seleccione una notificación primero");
             return;
         }
-        
+
         String idNotificacion = tblNotificaciones.getValueAt(fila, 3).toString();
         String usuarioOrigen = tblNotificaciones.getValueAt(fila, 0).toString();
-        
-        
-        PersonaProvider.marcarComoLeido(Login.usuarioActual, idNotificacion);
-        
-        List<Map<String, Object>> notificaciones = PersonaProvider.obtenerTablasCompartidas(Login.usuarioActual);
-        Map<String, Object> notificacionSeleccionada = null;
-        
-        for (Map<String, Object> notif : notificaciones){
-            if (notif.get("id").equals(idNotificacion)){
-                notificacionSeleccionada = notif;
-                break;
-            }
-        }
-        
-        if(notificacionSeleccionada != null){
-            @SuppressWarnings("Unchecked")
-            List<Map<String, Object>> datos = (List<Map<String, Object>>) notificacionSeleccionada.get("datos");
-            mostrarDatosCompartidos(usuarioOrigen, datos);
-            
-        }
-        cargarNotificaciones();
-        
+
+        db.collection("compartidos")
+                .document(Login.usuarioActual)
+                .collection("tablas")
+                .document(idNotificacion)
+                .get()
+                .addListener(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            DocumentSnapshot doc = db.collection("compartidos")
+                                    .document(Login.usuarioActual)
+                                    .collection("tablas")
+                                    .document(idNotificacion)
+                                    .get()
+                                    .get(); // Esto bloquea hasta que se complete
+
+                            if (doc.exists()) {
+                                List<Map<String, Object>> datos = (List<Map<String, Object>>) doc.get("datos");
+
+                                if (!doc.getBoolean("leido")) {
+                                    PersonaProvider.marcarComoLeido(Login.usuarioActual, idNotificacion);
+                                }
+
+                                SwingUtilities.invokeLater(() -> {
+                                    mostrarTablaCompartida(usuarioOrigen, idNotificacion, datos);
+                                });
+                            }
+                        } catch (Exception e) {
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(VentanaNotificaciones.this,
+                                        "Error al cargar la tabla compartida: " + e.getMessage(),
+                                        "Error", JOptionPane.ERROR_MESSAGE);
+                            });
+                        }
+                    }
+                }, Runnable::run);
     }
-    
-    private void mostrarDatosCompartidos(String usuarioOrigen, List<Map<String, Object>> datos){
-        JFrame frame = new JFrame("Tabla compartida por: " + usuarioOrigen);
-        JTable table = new JTable();
-        DefaultTableModel model = new DefaultTableModel();
-        
-        if (!datos.isEmpty()){
-            for (String key : datos.get(0).keySet()){
-                model.addColumn(key);
-            }
-        }
-        for (Map<String, Object> fila :datos){
-            Object[] rowData = new Object[model.getColumnCount()];
-            for ( int i = 0; i <model.getColumnCount(); i++){
-                String columnName = model.getColumnName(i);
-                rowData[i] = fila.get(columnName);
-            }
-            model .addRow(rowData);
-        }
-        table.setModel(model);
-        frame.add(new JScrollPane(table));
-        frame.pack();
-        frame.setLocationRelativeTo(this);
-        frame.setVisible(true);
-    }
+
     private javax.swing.JButton btnCerrar;
     private javax.swing.JButton btnVer;
     private javax.swing.JLabel jLabel1;

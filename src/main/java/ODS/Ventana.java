@@ -1,8 +1,11 @@
 package ODS;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -74,6 +78,8 @@ public class Ventana extends javax.swing.JFrame {
         txtFechaIngreso = new javax.swing.JTextField();
         txtDiagnostico = new javax.swing.JTextField();
         ChoiceFunciones = new javax.swing.JComboBox<>();
+        txtCedula = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
 
         jLabel10.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel10.setText("Fecha ingreso:");
@@ -133,8 +139,8 @@ public class Ventana extends javax.swing.JFrame {
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(22, 6, 500, 158));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel1.setText("Cama:");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, 93, -1));
+        jLabel1.setText("Cedula:");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 170, 93, -1));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel2.setText("Edad:");
@@ -146,7 +152,7 @@ public class Ventana extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel4.setText("ID:");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 170, 93, -1));
+        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, 93, -1));
 
         txtNombre.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
@@ -178,7 +184,7 @@ public class Ventana extends javax.swing.JFrame {
                 txtIdActionPerformed(evt);
             }
         });
-        jPanel1.add(txtId, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 170, 120, -1));
+        jPanel1.add(txtId, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 330, 120, -1));
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel5.setText("Email:");
@@ -194,7 +200,7 @@ public class Ventana extends javax.swing.JFrame {
         jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 280, -1, -1));
 
         jLabel6.setIcon(new javax.swing.ImageIcon("C:\\Users\\USUARIO\\Documents\\NetBeansProjects\\tutorial1\\src\\logo1.png")); // NOI18N
-        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 330, -1, -1));
+        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 330, -1, -1));
 
         btnSalir.setBackground(new java.awt.Color(255, 51, 0));
         btnSalir.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -234,6 +240,11 @@ public class Ventana extends javax.swing.JFrame {
             }
         });
         jPanel1.add(ChoiceFunciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 60, 170, -1));
+        jPanel1.add(txtCedula, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 170, 120, 30));
+
+        jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel9.setText("Cama:");
+        jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, 93, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -286,12 +297,13 @@ public class Ventana extends javax.swing.JFrame {
         if (filaSeleccionada >= 0 && !editandoDesdeTabla) {
             txtCama.setText(tblPersona.getValueAt(filaSeleccionada, 0).toString());
             txtId.setText(tblPersona.getValueAt(filaSeleccionada, 1).toString());
-            txtFechaIngreso.setText(tblPersona.getValueAt(filaSeleccionada, 2).toString());
-            txtNombre.setText(tblPersona.getValueAt(filaSeleccionada, 3).toString());
-            txtEdad.setText(tblPersona.getValueAt(filaSeleccionada, 4).toString());
-            txtDiagnostico.setText(tblPersona.getValueAt(filaSeleccionada, 5).toString());
-            txtPendientes.setText(tblPersona.getValueAt(filaSeleccionada, 6).toString());
-            txtEmail.setText(tblPersona.getValueAt(filaSeleccionada, 7).toString());
+            txtCedula.setText(tblPersona.getValueAt(filaSeleccionada, 2).toString());
+            txtFechaIngreso.setText(tblPersona.getValueAt(filaSeleccionada, 3).toString());
+            txtNombre.setText(tblPersona.getValueAt(filaSeleccionada, 4).toString());
+            txtEdad.setText(tblPersona.getValueAt(filaSeleccionada, 5).toString());
+            txtDiagnostico.setText(tblPersona.getValueAt(filaSeleccionada, 6).toString());
+            txtPendientes.setText(tblPersona.getValueAt(filaSeleccionada, 7).toString());
+            txtEmail.setText(tblPersona.getValueAt(filaSeleccionada, 8).toString());
         }
 
     }//GEN-LAST:event_tblPersonaMouseClicked
@@ -353,11 +365,13 @@ public class Ventana extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private java.awt.List list1;
     private javax.swing.JTable tblPersona;
     private javax.swing.JTextField txtCama;
+    private javax.swing.JTextField txtCedula;
     private javax.swing.JTextField txtDiagnostico;
     private javax.swing.JTextField txtEdad;
     private javax.swing.JTextField txtEmail;
@@ -383,6 +397,7 @@ public class Ventana extends javax.swing.JFrame {
             Map<String, Object> datos = new HashMap<>();
 
             datos.put("Cama", txtCama.getText());
+            datos.put("Cedula", txtCedula.getText());
             datos.put("FechaIngreso", txtFechaIngreso.getText());
             datos.put("Nombre", txtNombre.getText());
             datos.put("Edad", edad);
@@ -397,7 +412,18 @@ public class Ventana extends javax.swing.JFrame {
             if (PersonaProvider.guardarPersona(Login.usuarioActual, idPersona, datos)) {
                 JOptionPane.showMessageDialog(null, "Guardado con exito");
                 clearForm();
+                TableRowSorter<DefaultTableModel> sorter
+                        = (TableRowSorter<DefaultTableModel>) tblPersona.getRowSorter();
+                RowFilter<? super DefaultTableModel, ? super Integer> currentFilter = null;
+                if (sorter != null) {
+                    currentFilter = sorter.getRowFilter();
+                }
                 PersonaProvider.cargarTablaPersona(tblPersona, Login.usuarioActual);
+
+                if (currentFilter != null) {
+                    tblPersona.setRowSorter(sorter);
+                    sorter.setRowFilter(currentFilter);
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Error al guardar");
             }
@@ -422,7 +448,8 @@ public class Ventana extends javax.swing.JFrame {
             int edad = Integer.parseInt(edadText);
 
             Map<String, Object> datos = new HashMap<>();
-            datos.put("Cama", txtCama.getText());  // Como String
+            datos.put("Cama", txtCama.getText());
+            datos.put("Cedula", txtCedula.getText());
             datos.put("FechaIngreso", txtFechaIngreso.getText());
             datos.put("Nombre", txtNombre.getText());
             datos.put("Edad", edad);
@@ -430,15 +457,28 @@ public class Ventana extends javax.swing.JFrame {
             datos.put("Pendientes", txtPendientes.getText());
             datos.put("Email", txtEmail.getText());
 
+            TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) tblPersona.getRowSorter();
+            RowFilter<? super DefaultTableModel, ? super Integer> currentFilter = null;
+
+            if (sorter != null) {
+                currentFilter = sorter.getRowFilter();
+            }
+
             if (PersonaProvider.actualizarPersona(Login.usuarioActual,
                     txtId.getText(), datos)) {
-                JOptionPane.showMessageDialog(this, "Actualizado con exito");
+                JOptionPane.showMessageDialog(this, "Actualizado con éxito");
+
                 PersonaProvider.cargarTablaPersona(tblPersona, Login.usuarioActual);
+
+                if (currentFilter != null) {
+                    tblPersona.setRowSorter(sorter);
+                    sorter.setRowFilter(currentFilter);
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Error al actualizar");
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Edad debe ser un numero valido");
+            JOptionPane.showMessageDialog(this, "Edad debe ser un número válido");
         }
     }
 
@@ -446,13 +486,28 @@ public class Ventana extends javax.swing.JFrame {
         int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar este registro?",
                 "Confirmar", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
+            // Preservar el filtro actual
+            TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) tblPersona.getRowSorter();
+            RowFilter<? super DefaultTableModel, ? super Integer> currentFilter = null;
+
+            if (sorter != null) {
+                currentFilter = sorter.getRowFilter();
+            }
+
             if (PersonaProvider.eliminarPersona(Login.usuarioActual, txtId.getText())) {
                 JOptionPane.showMessageDialog(this, "Eliminado exitosamente");
                 clearForm();
+
+                // Recargar los datos
                 PersonaProvider.cargarTablaPersona(tblPersona, Login.usuarioActual);
+
+                // Restaurar el filtro si existía
+                if (currentFilter != null) {
+                    tblPersona.setRowSorter(sorter);
+                    sorter.setRowFilter(currentFilter);
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Error al eliminar");
-
             }
         }
     }
@@ -468,8 +523,11 @@ public class Ventana extends javax.swing.JFrame {
             JPanel panelExpandido = new JPanel(new BorderLayout());
             jPanel1.remove(jScrollPane1);
             panelExpandido.add(jScrollPane1, BorderLayout.CENTER);
+            Color colorFondo = new Color(221, 255, 170);
+            panelExpandido.setBackground(colorFondo);
 
             JButton btnReducir = new JButton("Reducir Vista");
+            btnReducir.setFont(new Font("Arial", Font.BOLD, 14));
             btnReducir.addActionListener(e -> {
                 getContentPane().removeAll();
                 getContentPane().add(panelOriginal);
@@ -551,21 +609,24 @@ public class Ventana extends javax.swing.JFrame {
                             campo = "Cama";
                             break;
                         case 2:
-                            campo = "FechaIngreso";
+                            campo = "cedula";
                             break;
                         case 3:
-                            campo = "Nombre";
+                            campo = "FechaIngreso";
                             break;
                         case 4:
-                            campo = "Edad";
+                            campo = "Nombre";
                             break;
                         case 5:
-                            campo = "Diagnostico";
+                            campo = "Edad";
                             break;
                         case 6:
-                            campo = "Pendientes";
+                            campo = "Diagnostico";
                             break;
                         case 7:
+                            campo = "Pendientes";
+                            break;
+                        case 8:
                             campo = "Email";
                             break;
                         default:
@@ -611,19 +672,36 @@ public class Ventana extends javax.swing.JFrame {
     }
 
     private void mostrarDialogoBusqueda() {
+
+        JPanel panelBusqueda = new JPanel(new GridLayout(2, 2, 5, 5));
+
+        JComboBox<String> cbCategorias = new JComboBox<>();
+        cbCategorias.addItem("Todos los campos");
+        cbCategorias.addItem("Cama");
+        cbCategorias.addItem("ID");
+        cbCategorias.addItem("Cédula");
+        cbCategorias.addItem("Fecha ingreso");
+        cbCategorias.addItem("Nombre");
+        cbCategorias.addItem("Edad");
+        cbCategorias.addItem("Diagnóstico");
+        cbCategorias.addItem("Pendientes");
+        cbCategorias.addItem("Email");
+
         JTextField txtBuscar = new JTextField(20);
 
-        JPanel panelBusqueda = new JPanel();
-        panelBusqueda.add(new JLabel("Texto a buscar: "));
+        panelBusqueda.add(new JLabel("Categoría:"));
+        panelBusqueda.add(cbCategorias);
+        panelBusqueda.add(new JLabel("Texto a buscar:"));
         panelBusqueda.add(txtBuscar);
 
         int resultado = JOptionPane.showConfirmDialog(this, panelBusqueda,
-                "Buscar en todos los campos", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                "Buscar", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (resultado == JOptionPane.OK_OPTION) {
             String texto = txtBuscar.getText().trim();
+            String categoria = (String) cbCategorias.getSelectedItem();
 
             if (!texto.isEmpty()) {
-                buscarEnTabla(texto);
+                buscarEnTabla(texto, categoria);
             } else {
                 DefaultTableModel model = (DefaultTableModel) tblPersona.getModel();
                 TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
@@ -634,25 +712,66 @@ public class Ventana extends javax.swing.JFrame {
 
     }
 
-    private void buscarEnTabla(String texto) {
+    private void buscarEnTabla(String texto, String categoria) {
         DefaultTableModel model = (DefaultTableModel) tblPersona.getModel();
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         tblPersona.setRowSorter(sorter);
 
-        // Crear filtro que busque en todas las columnas
-        RowFilter<DefaultTableModel, Object> filter = new RowFilter<DefaultTableModel, Object>() {
-            @Override
-            public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
-                for (int i = entry.getValueCount() - 1; i >= 0; i--) {
-                    if (entry.getStringValue(i).toLowerCase().contains(texto.toLowerCase())) {
-                        return true;
+        if (categoria.equals("Todos los campos")) {
+            RowFilter<DefaultTableModel, Object> filter = new RowFilter<DefaultTableModel, Object>() {
+                @Override
+                public boolean include(RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                    for (int i = entry.getValueCount() - 1; i >= 0; i--) {
+                        if (entry.getStringValue(i).toLowerCase().contains(texto.toLowerCase())) {
+                            return true;
+                        }
                     }
+                    return false;
                 }
-                return false;
+            };
+            sorter.setRowFilter(filter);
+        } else {
+            int columna = -1;
+            switch (categoria) {
+                case "Cama":
+                    columna = 0;
+                    break;
+                case "ID":
+                    columna = 1;
+                    break;
+                case "Cedula":
+                    columna = 2;
+                    break;
+                case "Fecha ingreso":
+                    columna = 3;
+                    break;
+                case "Nombre":
+                    columna = 4;
+                    break;
+                case "Edad":
+                    columna = 5;
+                    break;
+                case "Diagnostico":
+                    columna = 6;
+                    break;
+                case "Pendientes":
+                    columna = 7;
+                    break;
+                case "Email":
+                    columna = 8;
+                    break;
             }
-        };
-        sorter.setRowFilter(filter);
-
+            if (columna != -1) {
+                final int finalCol = columna;
+                RowFilter<DefaultTableModel, Object> filter = new RowFilter<DefaultTableModel, Object>() {
+                    @Override
+                    public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                        return entry.getStringValue(finalCol).toLowerCase().contains(texto.toLowerCase());
+                    }
+                };
+                sorter.setRowFilter(filter);
+            }
+        }
         if (tblPersona.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "No se encontraron coincidencias para: " + texto);
         }
@@ -667,13 +786,12 @@ public class Ventana extends javax.swing.JFrame {
 
         usuarioDestino = usuarioDestino.trim();
 
-            
-        if (usuarioDestino.equals(Login.usuarioActual)){
+        if (usuarioDestino.equals(Login.usuarioActual)) {
             JOptionPane.showMessageDialog(this, "No puedes compartir la tabla contigo mismo",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         DefaultTableModel model = (DefaultTableModel) tblPersona.getModel();
         List<Map<String, Object>> datosTabla = new ArrayList<>();
 
@@ -686,11 +804,11 @@ public class Ventana extends javax.swing.JFrame {
         }
 
         if (PersonaProvider.compartirTabla(Login.usuarioActual, usuarioDestino, datosTabla)) {
-            JOptionPane.showMessageDialog(this, "Tabla compartida exitosamente con: " + usuarioDestino, "Exito"
-                    ,JOptionPane.INFORMATION_MESSAGE );
+            JOptionPane.showMessageDialog(this, "Tabla compartida exitosamente con: " + usuarioDestino, "Exito",
+                    JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Error al compartir la tabla"
-                    , "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error al compartir la tabla",
+                    "Error", JOptionPane.ERROR_MESSAGE);
 
         }
     }
@@ -725,6 +843,7 @@ public class Ventana extends javax.swing.JFrame {
 
     void clearForm() {
         txtId.setText("");
+        txtCedula.setText("");
         txtNombre.setText("");
         txtCama.setText("");
         txtEdad.setText("");
